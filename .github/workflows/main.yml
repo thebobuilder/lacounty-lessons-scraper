@@ -1,0 +1,38 @@
+name: Scrape Lessons
+
+on:
+  schedule:
+    # Runs at 00:00 (midnight) on the 1st and 15th of every month
+    - cron: '0 0 1,15 * *'
+  workflow_dispatch: # Allows you to run it manually by clicking a button!
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Run the scraper
+        run: python scraper.py
+
+      - name: Commit and Push the JSON file
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add lessons.json
+          git commit -m "Update lessons data" || echo "No changes to commit"
+          git push
